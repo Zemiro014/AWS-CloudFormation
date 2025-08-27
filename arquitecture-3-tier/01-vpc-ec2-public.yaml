@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Step 1 - Simple VPC wwith EC2 in Public Subnet"
+
+Parameters:
+  KeyName:
+    Description: "SSH Key Pair Name to access the EC2"
+    Type: AWS::EC2::KeyPair::KeyName
+
+  InstanceType:
+    Description: "EC2 Instance Type"
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t3.micro
+      - t3.small
+    ConstraintDescription: "It should be a valid instance!"
