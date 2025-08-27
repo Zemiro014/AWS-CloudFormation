@@ -89,7 +89,7 @@ Resources:
       SubnetId: !Ref PublicSubnet
       SecurityGroupIds:
         - !Ref InstanceSecurityGroup
-      KeyName: Name
+      KeyName: my_key_pair
       Tags:
         - Value: MyEC2Instance
           Key: Name
