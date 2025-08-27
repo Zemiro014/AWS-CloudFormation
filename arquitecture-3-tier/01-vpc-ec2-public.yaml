@@ -15,3 +15,24 @@ Parameters:
       - t3.micro
       - t3.small
     ConstraintDescription: "It should be a valid instance!"
+
+Resources:
+  #----------------
+  #  1. Network
+  #----------------
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/1
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Value: Step1-VPC
+          Key: Name
+
+  MyInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Step1-IGW
