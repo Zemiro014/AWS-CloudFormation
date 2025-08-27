@@ -1,5 +1,5 @@
-AWSTemplateFormatVersion: "2010-09-09"
-Description: "Simple Example of a VPC with EC2"
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Simple Example of a VPC with EC2
 
 Resources:
   # Creating a VPC
@@ -10,7 +10,7 @@ Resources:
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
-        - key: Name
+        - Key: Name
           Value: MySimpleVPC
 
   # Creating a Public Subnet
@@ -20,7 +20,9 @@ Resources:
       VpcId: !Ref MySimpleVPC
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
-      AvailabilityZone: !Select [0, !GetAZs '']
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
       Tags:
         - Key: Name
           Value: PublicSubnet
@@ -31,10 +33,71 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: MyInternetGateay
+          Value: MyInternetGateway
 
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref MySimpleVPC
       InternetGatewayId: !Ref InternetGateway
+
+  # Creating Route Table and Internet Route
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MySimpleVPC
+      Tags:
+        - Value: PublicRouteTable
+          Key: Name
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
+
+  # Creating Security Group (SSH + HTTP)
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH and HTTP
+      VpcId: !Ref MySimpleVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  # Creating EC2 Instance
+  MyEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-02556f6726aa38019 #Amazn Linux
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      KeyName: Name
+      Tags:
+        - Value: MyEC2Instance
+          Key: Name
+
+Outputs:
+  InstancePublicIP:
+    Description: EC2 Instance Public IP
+    Value: !GetAtt MyEC2Instance.PublicIp
+  VPCIP:
+    Description: VPC ID
+    Value: !Ref MySimpleVPC
