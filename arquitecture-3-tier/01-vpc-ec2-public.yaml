@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Step 1 - Simple VPC wwith EC2 in Public Subnet"
+Description: "Step 1 - Simple VPC with EC2 in Public Subnet"
 
 Parameters:
   KeyName:
@@ -29,31 +29,29 @@ Resources:
       Tags:
         - Value: Step1-VPC
           Key: Name
-
   MyInternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
           Value: Step1-IGW
-
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref MyVPC
       InternetGatewayId: !Ref MyInternetGateway
-
   PublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
-      AvailabilityZone: !Select [0, !GetAZs ""]
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
       Tags:
         - Value: Step1-PublicSubnet
           Key: Name
-
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -61,7 +59,6 @@ Resources:
       Tags:
         - Value: Step1-PublicRT
           Key: Name
-
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
@@ -69,20 +66,18 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref MyInternetGateway
-
   SubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet
-
   #----------------
   #  2. Security
   #----------------
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: "Allow SSH and HTTP" 
+      GroupDescription: Allow SSH and HTTP
       VpcId: !Ref MyVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -105,18 +100,17 @@ Resources:
     Properties:
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyName
-      ImageId: ami-02556f6726aa38019 #Amazn Linux
+      ImageId: ami-02556f6726aa38019
       SubnetId: !Ref PublicSubnet
       SecurityGroupIds:
-        - !Ref 
+        - !Ref InstanceSecurityGroup
       Tags:
         - Value: Step1-EC2
           Key: Name
-  
 Outputs:
   EC2PublicIP:
-    Description: "EC2 Public IP"
+    Description: EC2 Public IP
     Value: !GetAtt PublicEC2Instance.PublicIp
   EC2PublicDNS:
-    Description: "EC2 Public DNS"
+    Description: EC2 Public DNS
     Value: !GetAtt PublicEC2Instance.PublicDnsName
