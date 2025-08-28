@@ -96,3 +96,27 @@ Resources:
       Tags:
         - Value: Step1-SG
           Key: Name
+
+  #----------------
+  #  3. EC2
+  #----------------
+  PublicEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: ami-02556f6726aa38019 #Amazn Linux
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref 
+      Tags:
+        - Value: Step1-EC2
+          Key: Name
+  
+Outputs:
+  EC2PublicIP:
+    Description: "EC2 Public IP"
+    Value: !GetAtt PublicEC2Instance.PublicIp
+  EC2PublicDNS:
+    Description: "EC2 Public DNS"
+    Value: !GetAtt PublicEC2Instance.PublicDnsName
