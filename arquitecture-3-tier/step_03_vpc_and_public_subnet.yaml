@@ -48,3 +48,26 @@ Resources:
       Tags:
         - Value: !Sub "${EnvironmentName}-vpc"
           Key: Name
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvironmentName}-Igw"
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC03
+      InternetGatewayId: !Ref InternetGateway
+
+  MyPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC03
+      CidrBlock: !Ref PublicSubnetCidr
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Value: !Sub "${EnvironmentName}-public-subnet"
+          Key: Name
