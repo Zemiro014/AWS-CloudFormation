@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Step 1 - Simple VPC with EC2 in Public Subnet"
+Description: "Step 2 - VPC with Public and Private Subnet, NAT GATEWAY and EC2 in Public Subnet"
 
 Parameters:
   KeyName:
@@ -135,7 +135,7 @@ Resources:
       SubnetId: !Ref PrivateSubnet
     
   #----------------
-  #  2. Security
+  #  4. Security
   #----------------
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -156,7 +156,7 @@ Resources:
           Key: Name
 
   #----------------
-  #  3. EC2
+  #  5. EC2 in Public Subnet
   #----------------
   PublicEC2Instance:
     Type: AWS::EC2::Instance
@@ -171,9 +171,15 @@ Resources:
         - Value: Step1-EC2
           Key: Name
 Outputs:
-  EC2PublicIP:
+  PulicEC2IP:
     Description: EC2 Public IP
     Value: !GetAtt PublicEC2Instance.PublicIp
-  EC2PublicDNS:
+  PublicEC2DNS:
     Description: EC2 Public DNS
     Value: !GetAtt PublicEC2Instance.PublicDnsName
+  PublicSubnetId:
+    Description: "Public Subnet created"
+    Value: !Ref PublicSubnet
+  PrivateSubnetId:
+    Description: "Private Subnet created"
+    Value: !Ref PrivateSubnet
