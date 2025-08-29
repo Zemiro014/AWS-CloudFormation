@@ -92,3 +92,47 @@ Resources:
     Properties:
       RouteTableId: !Ref MyRouteTable
       SubnetId: !Ref MyPublicSubnet
+
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow SSH and HTTP" 
+      VpcId: !Ref MyVPC03
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Value: !Sub "${EnvironmentName}-sg"
+          Key: Name
+
+  MyPublicEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      SubnetId: !Ref MyPublicSubnet
+      SecurityGroupIds:
+        - !Ref MySecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvironmentName}-public-ec2"
+
+Outputs:
+  VpcId:
+    Description: VPC ID Created
+    Value: !Ref MyVPC03
+
+  PublicSubnetId:
+    Description: Public Subnet ID
+    Value: !Ref MyPublicSubnet
+
+  Ec2PublicIP:
+    Description: EC2 Public IP
+    Value: !GetAtt MyPublicEC2Instance.PublicIp
