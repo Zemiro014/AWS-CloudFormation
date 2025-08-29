@@ -29,17 +29,20 @@ Resources:
       Tags:
         - Value: Step1-VPC
           Key: Name
+
   MyInternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
           Value: Step1-IGW
+
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref MyVPC
       InternetGatewayId: !Ref MyInternetGateway
+
   PublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -52,6 +55,7 @@ Resources:
       Tags:
         - Value: Step1-PublicSubnet
           Key: Name
+
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -59,6 +63,7 @@ Resources:
       Tags:
         - Value: Step1-PublicRT
           Key: Name
+
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
@@ -66,7 +71,8 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref MyInternetGateway
-  SubnetRouteTableAssociation:
+
+  PublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId: !Ref PublicRouteTable
