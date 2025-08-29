@@ -30,6 +30,7 @@ Resources:
         - Value: Step1-VPC
           Key: Name
 
+  # Internet Gateway + Attachment
   MyInternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
@@ -43,6 +44,7 @@ Resources:
       VpcId: !Ref MyVPC
       InternetGatewayId: !Ref MyInternetGateway
 
+  # Public Subnet, Public Route Table and public Route
   PublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -77,6 +79,61 @@ Resources:
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet
+
+  #----------------
+  #  2. NAT Gateway (Need elastic IP)
+  #----------------
+  NatEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  MyNatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      AllocationId: !GetAtt NatEIP.AllocationId
+      Tags:
+        - Value: MyNatGateway
+          Key: Name
+
+  #----------------
+  #  3. Private Subnet, Private Route Table and Private Route
+  #----------------
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      Tags:
+        - Value: PrivateSubnet
+          Key: Name
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Value: PrivateRouteTable
+          Key: Name
+
+  MyPrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref MyNatGateway 
+
+  PrivateSubnetRoutTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet
+    
   #----------------
   #  2. Security
   #----------------
