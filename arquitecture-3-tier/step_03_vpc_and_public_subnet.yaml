@@ -26,6 +26,11 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Key Pair Name to access the SSH (Should be created already)
 
+  EnvironmentName:
+    Type: String
+    Default: dev
+    Description: Environment Name (dev, string, prd)
+
 Mappings:
   RegionMap:
     us-east-1:
@@ -34,3 +39,12 @@ Mappings:
       AMI: ami-08962a4068733a2b6
     sa-east-1:
       AMI: ami-02556f6726aa38019
+
+Resources:
+  MyVPC03:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      Tags:
+        - Value: !Sub "${EnvironmentName}-vpc"
+          Key: Name
