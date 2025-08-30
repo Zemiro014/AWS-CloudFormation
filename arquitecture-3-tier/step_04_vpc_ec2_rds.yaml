@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Step 4 - VPC with Public(WEB) and Private(DB) Subnet; EC2 and RDS. Domonstrate 2-tier arquitecture (App + DB)"
+
+Parameters:
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: VPC CIDR
+
+  PublicSubnetCidr:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: Public Subnet
+
+  PrivateSubnetCidr:
+    Type: String
+    Default: 10.0.2.0/24
+    Description: Private Subnet to Data Base
+
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t3.micro
+      - t3.small
+    Description: EC2 Instance Type
+
+  DBUser:
+    Type: String
+    Default: admin
+    Description: Data Base User Name
+
+  DBPasswword:
+    NoEcho: true
+    Type: String
+    Description: Data Base Password
