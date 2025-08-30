@@ -88,3 +88,27 @@ Resources:
       Tags:
         - Value: !Sub "${EnvironmentName}-myPrivateSubnet"
           Key: Name
+
+  # Public Route Table
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Value: !Sub "${EnvironmentName}-rt"
+          Key: Name
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref MyInternateGateway
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref MyPublicSubnet
