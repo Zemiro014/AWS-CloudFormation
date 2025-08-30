@@ -66,3 +66,25 @@ Resources:
     Properties:
       VpcId: !Ref MyVPC
       InternetGatewayId: !Ref MyInternateGateway
+
+  # Subnets
+  MyPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PublicSubnetCidr
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Value: !Sub "${EnvironmentName}-myPublicSunet"
+          Key: Name
+
+  MyPrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref MyPrivateSubnet
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Value: !Sub "${EnvironmentName}-myPrivateSubnet"
+          Key: Name
