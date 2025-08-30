@@ -2,6 +2,11 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "Step 4 - VPC with Public(WEB) and Private(DB) Subnet; EC2 and RDS. Domonstrate 2-tier arquitecture (App + DB)"
 
 Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    Description: Environment Name (dev, staging, prd)
+
   VpcCidr:
     Type: String
     Default: 10.0.0.0/16
@@ -36,3 +41,28 @@ Parameters:
     NoEcho: true
     Type: String
     Description: Data Base Password
+
+Resources:
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Value: !Sub "${EnvironmentName}-myVpc"
+          Key: Name
+
+  # Internate Gateway + Attachment
+  MyInternateGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvironmentName}-myIg"
+  
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref MyInternateGateway
