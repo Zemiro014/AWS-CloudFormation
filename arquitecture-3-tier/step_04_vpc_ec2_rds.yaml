@@ -17,9 +17,14 @@ Parameters:
     Default: 10.0.1.0/24
     Description: Public Subnet
 
-  PrivateSubnetCidr:
+  PrivateSubnetCidr1:
     Type: String
     Default: 10.0.2.0/24
+    Description: Private Subnet to Data Base
+
+  PrivateSubnetCidr2:
+    Type: String
+    Default: 10.0.3.0/24
     Description: Private Subnet to Data Base
 
   InstanceType:
@@ -37,7 +42,7 @@ Parameters:
     Default: admin
     Description: Data Base User Name
 
-  DBPasswword:
+  DBPassword:
     NoEcho: true
     Type: String
     Description: Data Base Password
@@ -92,14 +97,24 @@ Resources:
         - Value: !Sub "${EnvironmentName}-myPublicSunet"
           Key: Name
 
-  MyPrivateSubnet:
+  MyPrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref MyVPC
-      CidrBlock: !Ref PrivateSubnetCidr
-      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: !Ref PrivateSubnetCidr1
+      AvailabilityZone: sa-east-1a
       Tags:
-        - Value: !Sub "${EnvironmentName}-myPrivateSubnet"
+        - Value: !Sub "${EnvironmentName}-myPrivateSubnet1"
+          Key: Name
+  
+  MyPrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PrivateSubnetCidr2
+      AvailabilityZone: sa-east-1b
+      Tags:
+        - Value: !Sub "${EnvironmentName}-myPrivateSubnet2"
           Key: Name
 
   # Public Route Table
@@ -178,7 +193,8 @@ Resources:
     Properties:
       DBSubnetGroupDescription: Subnet Group to Database
       SubnetIds: 
-        - !Ref MyPrivateSubnet
+        - !Ref MyPrivateSubnet1
+        - !Ref MyPrivateSubnet2
 
   MyDatabase:
     Type: AWS::RDS::DBInstance
@@ -188,7 +204,7 @@ Resources:
       Engine: mysql
       EngineVersion: "8.0"
       MasterUsername: !Ref DBUser
-      MasterUserPassword: !Ref DBPasswword
+      MasterUserPassword: !Ref DBPassword
       VPCSecurityGroups:
         - !Ref DataBaseSecurityGroup
       DBSubnetGroupName: !Ref MyDBSubnetGroup
