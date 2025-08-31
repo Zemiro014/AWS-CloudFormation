@@ -42,6 +42,19 @@ Parameters:
     Type: String
     Description: Data Base Password
 
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Key Pair Name to access the SSH (Should be created already)
+
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMI: ami-0c55b159cbfafe1f0
+    us-east-2:
+      AMI: ami-08962a4068733a2b6
+    sa-east-1:
+      AMI: ami-02556f6726aa38019
+
 Resources:
   MyVPC:
     Type: AWS::EC2::VPC
@@ -135,7 +148,7 @@ Resources:
   DataBaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow access to MySQL only
+      GroupDescription: Allow access to MySQL only from Web
       VpcId: !Ref MyVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -145,3 +158,16 @@ Resources:
       Tags:
         - Value: !Sub "${EnvironmentName}-dbSg"
           Key: Name
+
+  # EC2
+  MyEc2:
+    Type: AWS::EC2::Instance
+    Properties:
+      SubnetId: !Ref MyPublicSubnet
+      InstanceType: !Ref InstanceType
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]
+      SecurityGroupIds:
+        - !Ref WebSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvironmentName}-webServer"
