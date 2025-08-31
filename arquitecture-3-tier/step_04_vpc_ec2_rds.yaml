@@ -102,7 +102,7 @@ Resources:
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: !Ref PrivateSubnetCidr1
-      AvailabilityZone: sa-east-1a
+      AvailabilityZone: !Select [0, !GetAZs ""]
       Tags:
         - Value: !Sub "${EnvironmentName}-myPrivateSubnet1"
           Key: Name
@@ -112,7 +112,7 @@ Resources:
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: !Ref PrivateSubnetCidr2
-      AvailabilityZone: sa-east-1b
+      AvailabilityZone: !Select [1, !GetAZs ""]
       Tags:
         - Value: !Sub "${EnvironmentName}-myPrivateSubnet2"
           Key: Name
