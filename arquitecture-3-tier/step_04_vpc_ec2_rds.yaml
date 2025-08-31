@@ -96,7 +96,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref MyVPC
-      CidrBlock: !Ref MyPrivateSubnet
+      CidrBlock: !Ref PrivateSubnetCidr
       AvailabilityZone: !Select [0, !GetAZs ""]
       Tags:
         - Value: !Sub "${EnvironmentName}-myPrivateSubnet"
@@ -171,3 +171,47 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${EnvironmentName}-webServer"
+
+  # RDS Database
+  MyDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet Group to Database
+      SubnetIds: 
+        - !Ref MyPrivateSubnet
+
+  MyDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: 20
+      Engine: mysql
+      EngineVersion: "8.0"
+      MasterUsername: !Ref DBUser
+      MasterUserPassword: !Ref DBPasswword
+      VPCSecurityGroups:
+        - !Ref DataBaseSecurityGroup
+      DBSubnetGroupName: !Ref MyDBSubnetGroup
+      PubliclyAccessible: false
+      MultiAZ: false
+      StorageType: gp2
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvironmentName}-rds"
+
+Outputs:
+  VpcId:
+    Description: VPC ID Created
+    Value: !Ref MyVPC
+
+  PublicSubnetId:
+    Description: Public Subnet ID
+    Value: !Ref MyPublicSubnet
+
+  Ec2PublicIP:
+    Description: EC2 Public IP
+    Value: !GetAtt MyEc2.PublicIp
+
+  RDSInstance:
+    Description: Database Endpoint
+    Value: !GetAtt  MyDatabase.Endpoint.Address
