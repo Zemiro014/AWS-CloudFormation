@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Step 5 - VPC + ALB + AutoScaling Group + RDS
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    Description: Environment Name (dev, staging, prd)
+
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: VPC CIDR
+
+  PublicSubnet1Cidr:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: CIDR of Public Subnet 1
+
+  PublicSubnet2Cidr:
+    Type: String
+    Default: 10.0.2.0/24
+    Description: CIDR of Public Subnet 2
+
+  PrivateSubnet1Cidr:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: CIDR of Private Subnet 1
+
+  PrivateSubnet2Cidr:
+    Type: String
+    Default: 10.0.2.0/24
+    Description: CIDR of Private Subnet 2
+
+  KeyName: 
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Key Pair Name to access the SSH (Should be created already)
+
+  DBUserName:
+    Type: String
+    Default: Admin
+    Description: DB user name
+
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: Data Base Password
+
+  InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.small
+      - t2.micro
+      - t3.small
+      - t3.micro
+    Description: EC2 Instance Type
+
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMI: ami-0c55b159cbfafe1f0
+    us-east-2:
+      AMI: ami-08962a4068733a2b6
+    sa-east-1:
+      AMI: ami-02556f6726aa38019
+
+Resources:
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Value: !Sub "${EnvironmentName}-myVpc"
+          Key: Key
