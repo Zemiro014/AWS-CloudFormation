@@ -234,3 +234,25 @@ Resources:
       Tags:
         - Value: !Sub "${EnvironmentName}-private-sg"
           Key: Name
+
+  # ---------------------- IAM (SSM) ----------------------
+  PrivateInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ec2.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPloicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: Name
+          Value: !Sub "${EnvironmentName}-private-role"
+
+  PrivateInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref PrivateInstanceRole
