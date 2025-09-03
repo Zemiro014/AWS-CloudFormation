@@ -41,6 +41,21 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Key Pair Name to access the SSH (Should be created already)
 
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64
+    Description: AMI do Amazon Linux 2023 via SSM Parameter (mantida pela AWS)
+
+  CreateRDS:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "false"
+    Description: Se "true", cria um RDS PostgreSQL em uma das subnets privadas (apenas lab)
+
+  DBName:
+    Type: String
+    Default: appdb
+
   DBUserName:
     Type: String
     Default: Admin
@@ -61,6 +76,16 @@ Parameters:
       - t3.micro
     Description: EC2 Instance Type
 
+  DesiredCapacity:
+    Type: Number
+    Default: 2
+  MinSize:
+    Type: Number
+    Default: 2
+  MaxSize:
+    Type: Number
+    Default: 4
+
 Mappings:
   RegionMap:
     us-east-1:
@@ -69,6 +94,10 @@ Mappings:
       AMI: ami-08962a4068733a2b6
     sa-east-1:
       AMI: ami-02556f6726aa38019
+
+Conditions:
+  HasKeyPair: !Not [!Equals [!Ref KeyName, ""]]
+  WillCreateRDS: !Equals [!Ref CreateRDS, "true"]
 
 Resources:
   MyVPC:
@@ -286,3 +315,65 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref AppTargetGroup
+
+  # --------------------- LAUNCH Template + ASG -----
+  AppLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        ImageId: !Ref LatestAmiId
+        InstanceType: !Ref InstanceType
+        IamInstanceProfile: {Arn: !GetAtt AppInstanceProfile.Arn}
+        SecurityGroupIds: [!Ref AppSecurityGroup]
+        KeyName: !If [HasKeyPair, !Ref KeyName, !Ref 'AWS::NoValue']
+        UserData: !Base64 
+          #!/bin/bash
+          set -euxo pipefail
+          dnf -y update
+          dnf -y install nginx
+          INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id || true)
+          PRIVATE_IP=$(hostname -I | awk '{print $1}')
+          cat > /usr/share/nginx/html/index.html << 'HTML'
+          <html>
+            <head><title>Step 5 – App</title></head>
+            <body>
+              <h1>App online (ASG)</h1>
+              <p>Instância: ${INSTANCE_ID}</p>
+              <p>IP privado: ${PRIVATE_IP}</p>
+            </body>
+          </html>
+          HTML
+          systemctl enable nginx
+          systemctl start nginx
+
+  AppAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      MaxSize: !Ref MaxSize
+      MinSize: !Ref MinSize
+      VPCZoneIdentifier:
+        - !Ref MyPrivateSubnet1
+        - !Ref MyPrivateSubnet2
+      LaunchTemplate:
+        Version: !GetAtt AppLaunchTemplate.LatestVersionNumber
+        LaunchTemplateId: !Ref AppLaunchTemplate
+      DesiredCapacity: !Ref DesiredCapacity
+      TargetGroupARNs:
+        - !Ref DesiredCapacity
+      HealthCheckType: EC2
+      HealthCheckGracePeriod: 60
+      Tags:
+        - Value: !Sub '${EnvironmentName}-app-asg'
+          Key: Name
+          PropagateAtLaunch: true
+
+  CpuTargetTracking:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AutoScalingGroupName: !Ref AppAutoScalingGroup
+      PolicyType: TargetTrackingScaling
+      TargetTrackingConfiguration:
+        TargetValue: 50
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ASGAverageCPUUtilization
+          
