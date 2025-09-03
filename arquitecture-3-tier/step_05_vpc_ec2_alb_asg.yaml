@@ -386,4 +386,50 @@ Resources:
       SubnetIds:
         - !Ref MyPrivateSubnet1
         - !Ref MyPrivateSubnet2
+
+  PostgresDb:
+    Type: AWS::RDS::DBInstance
+    Condition: WillCreateRDS
+    Properties:
+      DBInstanceIdentifier: !Sub '${EnvironmentName}-postgres'
+      Engine: postgres
+      EngineVersion: '16.3'
+      DBName: !Ref DBName
+      MasterUsername: !Ref DBUserName
+      MasterUserPassword: !Ref DBPassword
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: 20
+      StorageType: gp3
+      MultiAZ: false
+      PubliclyAccessible: false
+      VPCSecurityGroups:
+        - !Ref AppSecurityGroup
+      DBSubnetGroupName: !Ref RdsSubnetGroup
+      DeletionProtection: false
+      BackupRetentionPeriod: 1
+      AutoMinorVersionUpgrade: true
+      CopyTagsToSnapshot: true
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+
+Outputs:
+  AlbDNS:
+    Description: ALB Public Endpoint
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+  AsgName:
+    Description: Auto Scaling Group Name
+    Value: !Ref AppAutoScalingGroup
+  AppSecurityGroupId:
+    Description: Security Group das instâncias de app
+    Value: !Ref AppSecurityGroup
+  PublicSubnets:
+    Description: Public Subnets IDs
+    Value: !Join [",", [!Ref MyPublicSubnet1, !Ref MyPublicSubnet2]]
+  PrivateAppSubnets:
+    Description: Private Subnets IDs
+    Value: !Join [",", [!Ref MyPublicSubnet1, !Ref MyPrivateSubnet2]]
+  RdsEndpoint:
+    Condition: WillCreateRDS
+    Description: RDS Endpoint (if created)
+    Value: !GetAtt PostgresDb.Endpoint.Address
           
