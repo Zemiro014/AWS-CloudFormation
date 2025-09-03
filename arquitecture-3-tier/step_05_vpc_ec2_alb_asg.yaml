@@ -131,3 +131,32 @@ Resources:
       Tags:
         - Value: !Sub "${EnvironmentName}-privateSubnet2"
           Key: Name
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Value: !Sub "${EnvironmentName}-rt"
+          Key: Name
+
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref MyInternateGateway
+
+  PublicSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref MyPublicSubnet1
+
+  PublicSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref MyPublicSubnet2
+      
