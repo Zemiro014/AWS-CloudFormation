@@ -137,7 +137,7 @@ Resources:
     Properties:
       VpcId: !Ref MyVPC
       Tags:
-        - Value: !Sub "${EnvironmentName}-rt"
+        - Value: !Sub "${EnvironmentName}-publicRT"
           Key: Name
 
   PublicDefaultRoute:
@@ -173,4 +173,31 @@ Resources:
       Tags:
         - Value: !Sub "${EnvironmentName}-natGw"
           Key: Name
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Value: !Sub "${EnvironmentName}-privateRT"
+          Key: Name
+
+  PrivateDefaultRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref MyPrivateSubnet1
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref MyPrivateSubnet2
       
