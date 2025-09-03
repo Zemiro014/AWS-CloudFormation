@@ -76,6 +76,19 @@ Resources:
         - Value: !Sub "${EnvironmentName}-myVpc"
           Key: Key
 
+  MyInternateGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: 
+          Value: !Sub "${EnvironmentName}-myIg"
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref MyInternateGateway
+
   MyPublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
