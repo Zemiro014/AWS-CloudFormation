@@ -114,7 +114,7 @@ Resources:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
-        - Key: 
+        - Key: Name
           Value: !Sub "${EnvironmentName}-myIg"
 
   AttachGateway:
@@ -338,8 +338,8 @@ Resources:
             <head><title>Step 5 – App</title></head>
             <body>
               <h1>App online (ASG)</h1>
-              <p>Instância: ${INSTANCE_ID}</p>
-              <p>IP privado: ${PRIVATE_IP}</p>
+              <p> Instância= ${INSTANCE_ID} </p>
+              <p>IP privado= ${PRIVATE_IP}</p>
             </body>
           </html>
           HTML
@@ -376,4 +376,14 @@ Resources:
         TargetValue: 50
         PredefinedMetricSpecification:
           PredefinedMetricType: ASGAverageCPUUtilization
+
+  # -------------- (Opcional) RDS para LAB ----------------------
+  RdsSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Condition: WillCreateRDS
+    Properties:
+      DBSubnetGroupDescription: RDS Subnet (Uses the APP Subnets)
+      SubnetIds:
+        - !Ref MyPrivateSubnet1
+        - !Ref MyPrivateSubnet2
           
