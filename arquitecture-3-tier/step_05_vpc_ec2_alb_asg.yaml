@@ -221,10 +221,10 @@ Resources:
         - Value: !Sub "${EnvironmentName}-alb-sg"
           Key: Name
 
-  PrivateSecurityGroup:
+  AppSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Private Instance - Inbound only from ALB
+      GroupDescription: Application Instance - Inbound only from ALB
       VpcId: !Ref MyVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -236,7 +236,7 @@ Resources:
           Key: Name
 
   # ---------------------- IAM (SSM) ----------------------
-  PrivateInstanceRole:
+  AppInstanceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -251,8 +251,38 @@ Resources:
         - Key: Name
           Value: !Sub "${EnvironmentName}-private-role"
 
-  PrivateInstanceProfile:
+  AppInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Roles:
-        - !Ref PrivateInstanceRole
+        - !Ref AppInstanceRole
+
+  # -------------------------- ALB / TG / LISTENER ---------------
+  AppTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      VpcId: !Ref MyVPC
+      Protocol: HTTP
+      Port: 80
+      TargetType: instance
+      HealthCheckPath: /
+      Matcher: { HttpCode: '200-399'}
+      Tags: [{Key: Name, Value: !Sub '${EnvironmentName}-tg'}]
+
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      Subnets: [!Ref MyPublicSubnet1, !Ref MyPublicSubnet2]
+      SecurityGroups: [!Ref AlbSecurityGroup]
+      Tags: [{Key: Name, Value: !Sub '${EnvironmentName}-alb'}]
+
+  HttpListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref AppTargetGroup
