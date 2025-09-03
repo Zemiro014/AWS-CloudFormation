@@ -32,6 +32,11 @@ Parameters:
     Default: 10.0.2.0/24
     Description: CIDR of Private Subnet 2
 
+  AllowedHttpCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: Who can access the ALB(HTTP). use your IP/32 in production
+
   KeyName: 
     Type: AWS::EC2::KeyPair::KeyName
     Description: Key Pair Name to access the SSH (Should be created already)
@@ -201,3 +206,31 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable
       SubnetId: !Ref MyPrivateSubnet2
       
+  # Security Group
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ALB HTTP Inbound
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Ref AllowedHttpCidr
+      Tags:
+        - Value: !Sub "${EnvironmentName}-alb-sg"
+          Key: Name
+
+  PrivateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Private Instance - Inbound only from ALB
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref AlbSecurityGroup
+      Tags:
+        - Value: !Sub "${EnvironmentName}-private-sg"
+          Key: Name
