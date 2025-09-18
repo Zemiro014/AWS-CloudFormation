@@ -24,12 +24,12 @@ Parameters:
 
   PrivateSubnet1Cidr:
     Type: String
-    Default: 10.0.1.0/24
+    Default: 10.0.3.0/24
     Description: CIDR of Private Subnet 1
 
   PrivateSubnet2Cidr:
     Type: String
-    Default: 10.0.2.0/24
+    Default: 10.0.4.0/24
     Description: CIDR of Private Subnet 2
 
   AllowedHttpCidr:
@@ -77,14 +77,16 @@ Parameters:
     Description: EC2 Instance Type
 
   DesiredCapacity:
-    Type: Number
-    Default: 2
+    Type: String
+    Default: '2'
+
   MinSize:
-    Type: Number
-    Default: 2
+    Type: String
+    Default: '2'
+
   MaxSize:
-    Type: Number
-    Default: 4
+    Type: String
+    Default: '4'
 
 Mappings:
   RegionMap:
@@ -274,7 +276,7 @@ Resources:
           - Effect: Allow
             Principal: {Service: ec2.amazonaws.com}
             Action: sts:AssumeRole
-      ManagedPloicyArns:
+      ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
       Tags:
         - Key: Name
@@ -326,25 +328,36 @@ Resources:
         IamInstanceProfile: {Arn: !GetAtt AppInstanceProfile.Arn}
         SecurityGroupIds: [!Ref AppSecurityGroup]
         KeyName: !If [HasKeyPair, !Ref KeyName, !Ref 'AWS::NoValue']
-        UserData: !Base64 
-          #!/bin/bash
-          set -euxo pipefail
-          dnf -y update
-          dnf -y install nginx
-          INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id || true)
-          PRIVATE_IP=$(hostname -I | awk '{print $1}')
-          cat > /usr/share/nginx/html/index.html << 'HTML'
-          <html>
-            <head><title>Step 5 – App</title></head>
-            <body>
-              <h1>App online (ASG)</h1>
-              <p> Instância= ${INSTANCE_ID} </p>
-              <p>IP privado= ${PRIVATE_IP}</p>
-            </body>
-          </html>
-          HTML
-          systemctl enable nginx
-          systemctl start nginx
+        UserData:
+          Fn::Base64: |
+            #!/bin/bash -xe
+            # Update the system packages
+            yum update -y
+
+            # Instalar Nginx
+            yum install nginx -y
+
+            # Start NGINX service
+            systemctl start nginx
+
+            # Enable NGINX to start on boot
+            systemctl enable nginx
+            systemctl status nginx
+
+            # Getting Private Instance IP
+            INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id || true)
+            PRIVATE_IP=$(hostname -I | awk '{print $1}')
+            
+            cat <<EOF > /usr/share/nginx/html/index.html
+            <html>
+              <head><title>Hello from NGINX on Amazon Linux 2023!</title></head>
+              <body>
+                <h1>Aplicação rodando na instância</h1>
+                <p>Instance: ${INSTANCE_ID}</p>
+                <p>IP privado: ${PRIVATE_IP}</p>
+              </body>
+            </html>
+            EOF
 
   AppAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -359,7 +372,7 @@ Resources:
         LaunchTemplateId: !Ref AppLaunchTemplate
       DesiredCapacity: !Ref DesiredCapacity
       TargetGroupARNs:
-        - !Ref DesiredCapacity
+        - !Ref AppTargetGroup
       HealthCheckType: EC2
       HealthCheckGracePeriod: 60
       Tags:
@@ -398,7 +411,7 @@ Resources:
       MasterUsername: !Ref DBUserName
       MasterUserPassword: !Ref DBPassword
       DBInstanceClass: db.t4g.micro
-      AllocatedStorage: 20
+      AllocatedStorage: '20'
       StorageType: gp3
       MultiAZ: false
       PubliclyAccessible: false
